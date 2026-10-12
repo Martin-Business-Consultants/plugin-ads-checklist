@@ -47,13 +47,9 @@ module AdsChecklist
       applicable.any? && applicable.all?(&:confirmed?)
     end
 
-    # A step's state in the list: a green check once confirmed, else a dot.
+    # A step's state in the list: a dot, lit green and glowing once confirmed.
     def ad_account_item_marker(item)
-      if item.confirmed?
-        tag.span icon_tag("check"), class: "ads-checklist-check", title: item.state_label
-      else
-        tag.span class: "ads-checklist-dot ads-checklist-dot--#{item.state}", title: item.state_label
-      end
+      tag.span class: "ads-checklist-dot ads-checklist-dot--#{item.state}", title: item.state_label
     end
 
     def ad_account_client_options = Client.ordered.pluck(:name, :id)
