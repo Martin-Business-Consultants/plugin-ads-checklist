@@ -1,0 +1,11 @@
+<%# locals: (item:, account:, step:, current:) %>
+<%# One step in the checklist's list: its number, its state as a dot. Picking it shows it on the
+    right (accounts/_item); replaced by ItemsController#update's turbo stream. %>
+<%= link_to ads_checklist_account_path(account, item: item.id), id: dom_id(item, :link), class: "scope-nav__item",
+      aria: { current: ("page" if current) }, data: { turbo_frame: "ads_checklist", turbo_action: "advance", filter_target: "item" } do %>
+  <span class="scope-nav__name">
+    <span class="ads-checklist-step txt-x-small txt-subtle"><%= step %></span>
+    <%= tag.span class: "ads-checklist-dot ads-checklist-dot--#{item.state}", title: item.state_label %>
+    <span class="<%= class_names("overflow-ellipsis", "txt-subtle": item.settled?) %>" title="<%= item.title %>"><%= item.title %></span>
+  </span>
+<% end %>

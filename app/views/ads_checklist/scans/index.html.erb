@@ -1,0 +1,131 @@
+<%# The AI audit sheet's content (in the ads_checklist_scan frame on the account's page): the domain
+    to audit, then the latest audit's recommendations beside the one picked. %>
+<turbo-frame id="ads_checklist_scan">
+  <div class="ads-checklist-sheet__content">
+    <% if flash[:alert] %>
+      <p class="ads-checklist-alert txt-small margin-none" role="alert"><%= flash[:alert] %></p>
+    <% end %>
+
+    <% if @ai && can?(:manage_ad_accounts) %>
+      <%= form_with url: ads_checklist_account_scans_path(@account), scope: :scan, class: "ads-checklist-sheet__form", data: { controller: "form" } do |form| %>
+        <label class="record-form__field">
+          <span class="record-form__label">Domain</span>
+          <%= form.text_field :domain, value: @scan&.domain || @account.host, class: "input full-width", required: true, autocomplete: "off", placeholder: "example.com" %>
+        </label>
+        <button type="submit" class="btn btn--link" data-form-target="submit">
+          <%= icon_tag "ai" %>
+          <span><%= @scan ? "Audit again" : "Run the audit" %></span>
+        </button>
+      <% end %>
+    <% elsif !@ai %>
+      <p class="txt-small txt-subtle margin-none">AI audits need the AI plugin: switched on, set up and within its budget (Settings › Plugins › AI).</p>
+    <% end %>
+
+    <% if @scan.nil? %>
+      <div class="ads-checklist-sheet__intro txt-small">
+        <p class="margin-none">The audit reads the website the ads send people to from outside, without logging in anywhere: the domain's Google and Meta verifications, how its addresses answer, and the tags on the landing page and in its Tag Manager container: the Google tag and conversion IDs, Analytics, the Meta Pixel and its events, enhanced conversions, a consent banner, phone links and forms.</p>
+        <p class="margin-none">The install's AI turns that into a recommendation for each step it says something about. Nothing is recorded until you approve it.</p>
+      </div>
+    <% elsif @scan.working? %>
+      <div class="ads-checklist-sheet__working txt-small" data-controller="poll" data-poll-interval-value="3">
+        <%= icon_tag "refresh" %>
+        <span>Auditing <strong><%= @scan.domain %></strong>: reading its verifications, landing page and tags, then asking the AI. A minute or so.</span>
+      </div>
+    <% elsif @scan.failed? %>
+      <p class="ads-checklist-alert txt-small margin-none" role="alert">The audit of <%= @scan.domain %> didn't finish: <%= @scan.error.presence || "it stopped answering" %>.</p>
+    <% else %>
+      <p class="txt-x-small txt-subtle margin-none">
+        <%= @scan.domain %>, audited <%= time_ago_in_words(@scan.finished_at || @scan.updated_at) %> ago by <%= @scan.user.display_name %> ·
+        <%= pluralize(@scan.recommendations.size, "recommendation") %>, <%= @scan.pending.size %> to review
+      </p>
+
+      <% if @scan.recommendations.empty? %>
+        <p class="txt-small txt-subtle margin-none">Nothing to recommend: what was found already matches the checklist, or says nothing about its steps.</p>
+      <% else %>
+        <div class="ads-checklist-review">
+          <nav class="scope-nav ads-checklist-review__list" aria-label="Recommendations">
+            <% @scan.recommendations.each do |recommendation| %>
+              <%# herb:key recommendation.id %>
+              <%= link_to ads_checklist_account_scans_path(@account, rec: recommendation.id), class: "scope-nav__item",
+                    aria: { current: ("page" if recommendation == @recommendation) } do %>
+                <span class="scope-nav__name">
+                  <%= tag.span class: "ads-checklist-dot ads-checklist-dot--#{recommendation.state}", title: recommendation.state.humanize %>
+                  <span class="<%= class_names("overflow-ellipsis", "txt-subtle": !recommendation.pending?) %>"><%= recommendation.item.title %></span>
+                </span>
+                <span class="scope-nav__count"><%= recommendation.pending? ? recommendation.confidence : recommendation.state %></span>
+              <% end %>
+            <% end %>
+          </nav>
+
+          <% if @recommendation %>
+            <% item = @recommendation.item %>
+            <article class="ads-checklist-review__detail flex flex-column gap" aria-label="<%= item.title %>">
+              <header class="flex flex-column gap-half">
+                <p class="txt-x-small txt-subtle margin-none"><%= item.group %></p>
+                <div class="ads-checklist-item__head">
+                  <h3 class="ads-checklist-detail__title"><%= item.title %></h3>
+                  <% if @recommendation.confidence %>
+                    <%= tag.span "#{@recommendation.confidence.capitalize} confidence", class: "status-tag status-tag--#{{ "high" => "positive", "medium" => "waiting", "low" => "neutral" }[@recommendation.confidence]} txt-nowrap" %>
+                  <% end %>
+                </div>
+              </header>
+
+              <dl class="record-facts txt-small">
+                <dt>Recorded now</dt>
+                <dd class="<%= class_names("ads-checklist-value", "txt-subtle": item.value.blank?) %>"><%= item.value.presence || "Nothing" %> (<%= item.state_label.downcase %>)</dd>
+                <% if @recommendation.evidence %>
+                  <dt>Found in</dt>
+                  <dd><%= @recommendation.evidence %></dd>
+                <% end %>
+                <% if @recommendation.attach_file %>
+                  <dt>File</dt>
+                  <dd><%= @recommendation.attach_file %>, kept on the step when approved</dd>
+                <% end %>
+              </dl>
+
+              <% if @recommendation.pending? %>
+                <%= form_with url: ads_checklist_account_recommendation_approval_path(@account, @recommendation), scope: :recommendation, class: "record-form", data: { controller: "form" } do |form| %>
+                  <label class="record-form__field">
+                    <span class="record-form__label">Recommended value</span>
+                    <%= form.text_area :value, value: @recommendation.value, rows: 3, class: "input full-width", required: true, autocomplete: "off" %>
+                    <span class="record-form__hint">Change it if you know better. Approving records it on the step as yours.</span>
+                  </label>
+                  <label class="record-form__field">
+                    <span class="record-form__label">Note</span>
+                    <%= form.text_area :note, value: @recommendation.note, rows: 2, class: "input full-width", placeholder: "Anything still to do" %>
+                  </label>
+                  <div class="ads-checklist-review__actions">
+                    <button type="submit" class="btn btn--link" data-form-target="submit">
+                      <%= icon_tag "check" %>
+                      <span>Approve</span>
+                    </button>
+                  </div>
+                <% end %>
+                <%= button_to ads_checklist_account_recommendation_rejection_path(@account, @recommendation), class: "btn txt-small", form_class: "ads-checklist-review__reject" do %>
+                  <%= icon_tag "close" %>
+                  <span>Reject</span>
+                <% end %>
+              <% else %>
+                <dl class="record-facts txt-small">
+                  <dt>Recommended</dt>
+                  <dd class="ads-checklist-value"><%= @recommendation.value %></dd>
+                  <% if @recommendation.note %>
+                    <dt>Note</dt>
+                    <dd class="ads-checklist-value"><%= @recommendation.note %></dd>
+                  <% end %>
+                  <dt><%= @recommendation.approved? ? "Approved by" : "Rejected by" %></dt>
+                  <dd><%= @recommendation.decided_by_name %>, <%= l @recommendation.decided_at.to_date, format: :long %></dd>
+                </dl>
+              <% end %>
+            </article>
+          <% end %>
+        </div>
+      <% end %>
+
+      <details class="ads-checklist-sheet__facts">
+        <summary class="txt-small">What was found about <%= @scan.domain %></summary>
+        <%= code_block JSON.pretty_generate(@scan.facts), language: "json" %>
+      </details>
+    <% end %>
+  </div>
+</turbo-frame>

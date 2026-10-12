@@ -1,0 +1,139 @@
+<%# locals: (item:, account:, step:, total:, next_item:) %>
+<%# The picked step, on the right of the account's page: what it's for, how to do it, and its value
+    and note to record. Replaced by ItemsController#update's turbo stream, so its state follows a save. %>
+<article class="flex flex-column gap" aria-label="<%= item.title %>">
+  <header class="flex flex-column gap-half">
+    <p class="txt-x-small txt-subtle margin-none">Step <%= step %> of <%= total %> · <%= item.group %></p>
+    <div class="ads-checklist-item__head">
+      <h2 class="ads-checklist-detail__title"><%= item.title %></h2>
+      <%= ad_account_item_state_tag item %>
+    </div>
+    <% if item.detail.present? %>
+      <p class="txt-small margin-none"><%= item.detail %></p>
+    <% end %>
+  </header>
+
+  <% if item.how.present? %>
+    <div class="ads-checklist-how txt-small">
+      <strong>How</strong>
+      <p class="margin-none"><%= item.how %></p>
+    </div>
+  <% end %>
+
+  <% if item.confirmed_value.present? && item.value.to_s != item.confirmed_value.to_s || item.confirmed_at && item.settled? %>
+    <dl class="record-facts txt-small">
+      <% if item.confirmed_value.present? && item.value.to_s != item.confirmed_value.to_s %>
+        <dt>Was confirmed as</dt>
+        <dd class="ads-checklist-value"><%= item.confirmed_value %></dd>
+      <% end %>
+      <% if item.confirmed_at && item.settled? %>
+        <dt><%= item.not_applicable? ? "Marked by" : "Confirmed by" %></dt>
+        <dd><%= item.confirmed_by_name %>, <%= l item.confirmed_at.to_date, format: :long %></dd>
+      <% end %>
+    </dl>
+  <% end %>
+
+  <%= render "layouts/shared/errors", record: item %>
+
+  <%= form_with model: item, url: ads_checklist_account_item_path(account, item), scope: :item, namespace: dom_id(item), class: "record-form", data: { controller: "form" } do |form| %>
+    <% if item.custom? %>
+      <label class="record-form__field">
+        <span class="record-form__label">What to check</span>
+        <%= form.text_field :title, class: "input full-width", required: true, maxlength: 200, autocomplete: "off" %>
+      </label>
+      <label class="record-form__field">
+        <span class="record-form__label">Why it matters</span>
+        <%= form.text_field :detail, class: "input full-width", autocomplete: "off" %>
+      </label>
+    <% end %>
+
+    <% if item.webhooks? %>
+      <%= ad_account_webhooks_fields form, item %>
+      <span class="record-form__hint">Saving confirms them as yours; with none, it's to do again.</span>
+    <% else %>
+      <label class="record-form__field">
+        <span class="record-form__label">Value</span>
+        <%= form.text_field :value, class: "input full-width", autocomplete: "off", placeholder: item.example %>
+        <span class="record-form__hint">What is true now. Saving confirms it as yours; empty, it's to do again. Never a password: say where it's kept.</span>
+      </label>
+    <% end %>
+
+    <label class="record-form__field">
+      <span class="record-form__label">Note</span>
+      <%= form.text_area :note, class: "input full-width", rows: 3, placeholder: "Who gave access, what's still waiting on the client…" %>
+    </label>
+
+    <div class="record-form__footer">
+      <button type="submit" class="btn btn--link" data-form-target="submit">
+        <span>Save</span>
+      </button>
+    </div>
+  <% end %>
+
+  <% links = item.todo_links.includes(todo: :engagement).select(&:todo) %>
+  <section class="flex flex-column gap-half" aria-label="<%= term(:work) %>">
+    <span class="record-form__label txt-small"><%= term(:work) %></span>
+    <% if links.any? %>
+      <ul class="ads-checklist-files txt-small">
+        <% links.each do |link| %>
+          <%# herb:key link.id %>
+          <li>
+            <%= status_tag link.todo.status.humanize %>
+            <%= link_to link.todo.title, todo_path(link.todo), class: "txt-link overflow-ellipsis", data: { turbo_frame: "_top" } %>
+            <span class="txt-x-small txt-subtle txt-nowrap"><%= link.todo.engagement.ref %><%= ", due #{l link.todo.due_on, format: :short}" if link.todo.due_on %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="txt-x-small txt-subtle margin-none">None yet: <%= term(:work) %> at the top of the page adds some for <%= account.client.name %>, about this step.</p>
+    <% end %>
+  </section>
+
+  <section class="flex flex-column gap-half" aria-label="Files">
+    <span class="record-form__label txt-small">Files</span>
+    <% if item.files.attachments.any? %>
+      <ul class="ads-checklist-files txt-small">
+        <% item.files.attachments.each do |file| %>
+          <%# herb:key file.id %>
+          <li>
+            <%= icon_tag "attachment" %>
+            <%= link_to file.filename.to_s, rails_blob_path(file, disposition: "attachment"), class: "txt-link overflow-ellipsis", data: { turbo: false } %>
+            <span class="txt-x-small txt-subtle"><%= number_to_human_size(file.byte_size) %></span>
+            <%= render "layouts/shared/delete_dialog", name: file.filename.to_s, path: ads_checklist_account_item_file_path(account, item, file), trigger_class: "txt-small" %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="txt-x-small txt-subtle margin-none">None yet: keep what backs this step up here (an export, a screenshot, an approval).</p>
+    <% end %>
+    <%# The core's drop box (the upload controller): dropped or chosen files go straight to storage,
+        their progress on the box, then the form posts their signed ids. %>
+    <%= form_with url: ads_checklist_account_item_files_path(account, item), multipart: true,
+          data: { controller: "upload", upload_url_value: rails_direct_uploads_url, upload_max_size_value: Document::MAX_SIZE, turbo_frame: "_top" } do %>
+      <label class="btn input--upload full-width txt-small ads-checklist-drop">
+        <%= icon_tag "attachment" %>
+        <span data-upload-target="status">Drop files here or <span class="txt-link">choose…</span> <span class="txt-subtle">· up to <%= number_to_human_size(Document::MAX_SIZE) %> each</span></span>
+        <progress max="100" value="0" hidden data-upload-target="progress"></progress>
+        <input type="file" name="files[]" multiple aria-label="Add files to <%= item.title %>" data-upload-target="input" data-action="change->upload#start">
+      </label>
+    <% end %>
+  </section>
+
+  <div class="ads-checklist-item__actions txt-small">
+    <% if item.not_applicable? %>
+      <%= button_to "It applies after all", ads_checklist_account_item_confirmation_path(account, item), method: :delete, class: "btn txt-small", form: { data: { turbo_frame: "_top" } } %>
+    <% else %>
+      <%= button_to "Doesn't apply to this account", ads_checklist_account_item_not_applicable_path(account, item), class: "btn txt-small", form: { data: { turbo_frame: "_top" } } %>
+    <% end %>
+    <%= link_to "History", ads_checklist_audits_path(account_id: account.id, item_id: item.id), class: "btn txt-small", data: { turbo_frame: "_top" } %>
+    <% if item.custom? %>
+      <%= render "layouts/shared/delete_dialog", name: "“#{item.title}”", path: ads_checklist_account_item_path(account, item), trigger_class: "txt-small" %>
+    <% end %>
+    <% if next_item %>
+      <%= link_to ads_checklist_account_path(account, item: next_item.id), class: "btn txt-small ads-checklist-next", data: { turbo_frame: "ads_checklist", turbo_action: "advance" } do %>
+        <span>Next: <%= next_item.title %></span>
+        <%= icon_tag "arrow-right" %>
+      <% end %>
+    <% end %>
+  </div>
+</article>

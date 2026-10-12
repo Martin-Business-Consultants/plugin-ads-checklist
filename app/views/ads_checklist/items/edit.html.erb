@@ -1,0 +1,46 @@
+<% @page_title = @item.title %>
+
+<% content_for :header do %>
+  <%= parent_page @account.name, ads_checklist_account_path(@account, item: @item.id) %>
+<% end %>
+
+<section class="settings">
+  <div class="settings__panel panel shadow txt-align-start">
+    <h1 class="page-title"><%= @page_title %></h1>
+    <% if @item.detail.present? %>
+      <p class="txt-small txt-subtle"><%= @item.detail %></p>
+    <% end %>
+    <%= render "layouts/shared/errors", record: @item %>
+
+    <%= form_with model: @item, url: ads_checklist_account_item_path(@account, @item), scope: :item, class: "record-form", data: { controller: "form", action: "keydown.esc->form#cancel" } do |form| %>
+      <% if @item.custom? %>
+        <label class="record-form__field">
+          <span class="record-form__label">What to check</span>
+          <%= form.text_field :title, class: "input full-width", required: true, maxlength: 200, autocomplete: "off" %>
+        </label>
+        <label class="record-form__field">
+          <span class="record-form__label">Why it matters</span>
+          <%= form.text_field :detail, class: "input full-width", autocomplete: "off" %>
+        </label>
+      <% end %>
+
+      <label class="record-form__field">
+        <span class="record-form__label">Value</span>
+        <%= form.text_field :value, class: "input full-width", autofocus: true, autocomplete: "off" %>
+        <span class="record-form__hint">What is true now. Saving confirms it as yours<%= @item.confirmed_value.present? ? " (it was confirmed as: #{@item.confirmed_value})" : "" %>.</span>
+      </label>
+
+      <label class="record-form__field">
+        <span class="record-form__label">Note</span>
+        <%= form.text_field :note, class: "input full-width", autocomplete: "off", placeholder: "Who asked for it, where it was checked, what's still to do…" %>
+      </label>
+
+      <div class="record-form__footer">
+        <%= link_to "Cancel", ads_checklist_account_path(@account, item: @item.id), class: "btn btn--plain record-form__cancel", data: { form_target: "cancel" } %>
+        <button type="submit" class="btn btn--link" data-form-target="submit">
+          <span>Save</span>
+        </button>
+      </div>
+    <% end %>
+  </div>
+</section>

@@ -1,0 +1,151 @@
+<% @page_title = @account.name %>
+<% summary = @account.summary %>
+
+<% content_for :header do %>
+  <%= parent_page "Ads", ads_checklist_accounts_path %>
+<% end %>
+
+<%# The checklist on the left, the picked item on the right: picking one reloads only this frame,
+    so the page stays where it was scrolled. %>
+<turbo-frame id="ads_checklist" target="_top">
+  <section class="settings settings--split ads-checklist-split">
+    <div class="settings__panel panel shadow txt-align-start">
+      <div class="page-heading">
+        <h1 class="page-title"><%= @page_title %></h1>
+        <div class="page-heading__actions">
+          <% engagements = @account.client.engagements.open.order(created_at: :desc).to_a %>
+          <div class="display-contents" data-controller="dialog" data-dialog-modal-value="true" data-action="keydown.esc->dialog#close:stop">
+            <button type="button" class="btn btn--circle-mobile" data-action="dialog#open" title="Add <%= term(:work).downcase %> for <%= @account.client.name %>">
+              <%= icon_tag "board" %>
+              <span><%= term(:work) %></span>
+            </button>
+            <dialog class="dialog panel ads-checklist-sheet ads-checklist-sheet--narrow" data-dialog-target="dialog" aria-label="Add <%= term(:work).downcase %>">
+              <div class="ads-checklist-sheet__bar">
+                <h2 class="dialog__title">Add <%= term(:work).downcase %> · <%= @account.client.name %></h2>
+                <button type="button" class="btn txt-small" data-action="dialog#close">Cancel</button>
+              </div>
+              <div class="ads-checklist-sheet__content">
+                <% if engagements.empty? %>
+                  <p class="txt-small margin-none"><%= @account.client.name %> has no open <%= term(:engagement, count: 2).downcase %> to put <%= term(:work).downcase %> on. <%= link_to "Start one on their page", client_path(@account.client), class: "txt-link", data: { turbo_frame: "_top" } %>.</p>
+                <% else %>
+                  <%= form_with url: ads_checklist_account_todos_path(@account), scope: :todo, class: "record-form", data: { controller: "form", turbo_frame: "_top" } do |form| %>
+                    <label class="record-form__field">
+                      <span class="record-form__label"><%= term(:engagement) %></span>
+                      <%= form.select :engagement_id, engagements.map { [ "#{it.ref} · #{it.title}", it.id ] }, {}, class: "input input--select full-width" %>
+                    </label>
+                    <label class="record-form__field">
+                      <span class="record-form__label">About</span>
+                      <%= form.select :item_id, ad_account_item_groups(@items).flat_map(&:last).map { [ it.title, it.id ] }, { include_blank: "The ad account as a whole", selected: @item&.id }, class: "input input--select full-width" %>
+                    </label>
+                    <label class="record-form__field">
+                      <span class="record-form__label">What needs doing</span>
+                      <%= form.text_field :title, required: true, class: "input full-width", autocomplete: "off", placeholder: @item ? "e.g. Get #{@item.title.downcase} access from the client" : "What needs doing…" %>
+                    </label>
+                    <div class="record-form__field">
+                      <span class="record-form__label">Details</span>
+                      <%= rich_text_field form, :description, placeholder: "Optional. @ to mention someone. A link back to this step is added.", staff: true %>
+                    </div>
+                    <div class="record-form__row">
+                      <label class="record-form__field">
+                        <span class="record-form__label">Lead</span>
+                        <%= form.select :owner_id, User.active.people.ordered.map { [ it.display_name, it.id ] }, { include_blank: "Unassigned", selected: Current.user.person.id }, class: "input input--select full-width" %>
+                      </label>
+                      <label class="record-form__field">
+                        <span class="record-form__label">Due</span>
+                        <%= date_input form, :due_on, class: "input full-width" %>
+                      </label>
+                    </div>
+                    <div class="record-form__footer">
+                      <button type="submit" class="btn btn--link" data-form-target="submit">
+                        <span>Add <%= term(:work).downcase %></span>
+                      </button>
+                    </div>
+                  <% end %>
+                <% end %>
+              </div>
+            </dialog>
+          </div>
+          <% if AdsChecklist::Scan.ai_available_for?(@account) %>
+            <div class="display-contents" data-controller="dialog" data-dialog-modal-value="true" data-action="keydown.esc->dialog#close:stop">
+              <button type="button" class="btn btn--circle-mobile" data-action="dialog#open">
+                <%= icon_tag "ai" %>
+                <span>AI audit</span>
+              </button>
+              <dialog class="dialog panel ads-checklist-sheet" data-dialog-target="dialog" aria-label="AI audit">
+                <div class="ads-checklist-sheet__bar">
+                  <h2 class="dialog__title">AI audit · <%= @account.name %></h2>
+                  <%= link_to "Done", ads_checklist_account_path(@account, item: @item&.id), class: "btn txt-small", data: { turbo_frame: "_top" } %>
+                </div>
+                <turbo-frame id="ads_checklist_scan" src="<%= ads_checklist_account_scans_path(@account) %>" loading="lazy">
+                  <p class="txt-small txt-subtle margin-none">Loading…</p>
+                </turbo-frame>
+              </dialog>
+            </div>
+          <% end %>
+          <%= link_to ads_checklist_audits_path(account_id: @account.id), class: "btn btn--circle-mobile", data: { turbo_frame: "_top" } do %>
+            <%= icon_tag "history" %>
+            <span>History</span>
+          <% end %>
+          <% if can?(:manage_ad_accounts) %>
+            <%= link_to edit_ads_checklist_account_path(@account), class: "btn btn--circle-mobile", data: { keys: "e" } do %>
+              <%= icon_tag "pencil" %>
+              <span>Edit</span>
+              <kbd class="hide-on-touch">E</kbd>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="record-meta txt-small">
+        <%= ad_platform_tag @account %>
+        <% if @account.external_id %>
+          <span title="<%= @account.external_id_label %>"><%= @account.external_id %></span>
+        <% end %>
+        <%= render "ads_checklist/accounts/checklist_summary", account: @account, summary: summary %>
+        <%= link_to @account.client.name, client_path(@account.client, tab: "plugin-ads_checklist"), class: "txt-link" %>
+        <% if @account.url %>
+          <%= link_to @account.host, @account.url, class: "txt-link", target: "_blank", rel: "noopener" %>
+        <% end %>
+      </div>
+
+      <% steps = ad_account_step_numbers(@items) %>
+
+      <% ad_account_item_groups(@items).each do |group, items| %>
+        <%# herb:key group %>
+        <section class="settings__section flex flex-column gap-half">
+          <header class="ads-checklist-group__header">
+            <h2 class="divider"><%= group %></h2>
+            <%= render "ads_checklist/accounts/group_summary", account: @account, group: group, items: items %>
+          </header>
+          <nav class="scope-nav" aria-label="<%= group %>">
+            <% items.each do |item| %>
+              <%# herb:key item.id %>
+              <%= render "ads_checklist/accounts/item_link", item: item, account: @account, step: steps[item], current: item == @item %>
+            <% end %>
+          </nav>
+        </section>
+      <% end %>
+
+      <div class="section-actions">
+        <details class="ads-checklist-add">
+          <summary class="btn txt-small"><%= icon_tag "add" %> <span>Add an item</span></summary>
+          <%= form_with url: ads_checklist_account_items_path(@account), scope: :item, class: "flex flex-column gap-half txt-small" do |form| %>
+            <%= form.text_field :title, class: "input full-width", placeholder: "What to check", required: true, maxlength: 200, autocomplete: "off", autofocus: true, aria: { label: "What to check" } %>
+            <%= form.text_field :value, class: "input full-width", placeholder: "Its value, if you know it", autocomplete: "off", aria: { label: "Value" } %>
+            <div>
+              <button type="submit" class="btn btn--link txt-small">Add</button>
+            </div>
+          <% end %>
+        </details>
+      </div>
+    </div>
+
+    <div id="ads_checklist_detail" class="settings__panel panel shadow txt-align-start ads-checklist-detail">
+      <% if @item %>
+        <%= render "ads_checklist/accounts/item", item: @item, account: @account, step: steps[@item], total: @items.size, next_item: steps.keys[steps[@item]] %>
+      <% else %>
+        <p class="txt-small txt-subtle margin-none">Pick an item on the left to see and change it.</p>
+      <% end %>
+    </div>
+  </section>
+</turbo-frame>

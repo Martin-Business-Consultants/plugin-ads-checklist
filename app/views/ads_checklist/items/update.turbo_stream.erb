@@ -1,0 +1,9 @@
+<%# A save on the account's page: the item on the right, its row in the list, its group's count and the account's checklist count. %>
+<% steps = ad_account_step_numbers(@account.items.to_a) %>
+<%= turbo_stream.update "ads_checklist_detail", partial: "ads_checklist/accounts/item",
+      locals: { item: @item, account: @account, step: steps[@item], total: steps.size, next_item: steps.keys[steps[@item]] } %>
+<%= turbo_stream.replace dom_id(@item, :link), partial: "ads_checklist/accounts/item_link", locals: { item: @item, account: @account, step: steps[@item], current: true } %>
+<%= turbo_stream.replace dom_id(@account, "group_#{@item.group.parameterize(separator: "_")}"), partial: "ads_checklist/accounts/group_summary",
+      locals: { account: @account, group: @item.group, items: @account.items.where(group: @item.group).to_a } %>
+<%= turbo_stream.replace dom_id(@account, :checklist_summary), partial: "ads_checklist/accounts/checklist_summary",
+      locals: { account: @account, summary: @account.summary } %>

@@ -1,0 +1,31 @@
+<%# locals: (client:) %>
+<%# A tab on each client page (the :client_panel slot): the client's ad accounts and their checklists. Its first heading is hidden: the tab names it. %>
+<section class="settings__section flex flex-column gap-half">
+  <h2 class="divider">Ads</h2>
+  <% accounts = client.ads_checklist_accounts.ordered.includes(:items).to_a %>
+  <% if accounts.any? %>
+    <ul class="ads-checklist-accounts">
+      <% accounts.each do |account| %>
+        <%# herb:key account.id %>
+        <% summary = account.summary %>
+        <li class="ads-checklist-account">
+          <div class="ads-checklist-item__title">
+            <%= link_to account.name, ads_checklist_account_path(account), class: "txt-link" %>
+            <%= ad_platform_tag account %>
+          </div>
+          <%= ad_account_summary_tag account, summary %>
+          <% if (attention = ad_account_attention_text(account, summary)) %>
+            <span class="txt-x-small txt-subtle"><%= attention %></span>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="txt-small txt-subtle margin-none">No ad accounts yet: add their Google Ads or Meta Ads account to take it live step by step: access, billing, tracking, campaigns, sign-off.</p>
+  <% end %>
+  <% if can?(:manage_ad_accounts) %>
+    <div>
+      <%= link_to "Add an ad account", new_ads_checklist_account_path(client_id: client.id), class: "btn txt-small" %>
+    </div>
+  <% end %>
+</section>

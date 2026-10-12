@@ -1,0 +1,8 @@
+<%# locals: (account:, summary:) %>
+<%# The account's checklist count under its name, replaced when an item is saved. %>
+<span id="<%= dom_id(account, :checklist_summary) %>" class="record-meta">
+  <%= ad_account_summary_tag account, summary %>
+  <% if (attention = ad_account_attention_text(account, summary)) %>
+    <span><%= attention %></span>
+  <% end %>
+</span>

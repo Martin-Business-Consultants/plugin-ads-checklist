@@ -1,0 +1,54 @@
+<% @page_title = "Ads" %>
+
+<% content_for :index_filters do %>
+  <%= render "layouts/shared/quick_filter", title: "Show…", param: :show, current: @show,
+        options: [ [ "Needs attention (#{@counts["attention"]})", "attention" ], [ "All (#{@counts["all"]})", "all" ] ] %>
+  <%= render "layouts/shared/quick_filter", title: "Platform…", param: :platform, current: @platform.to_s,
+        options: [ [ "Every platform", "" ], *ad_platform_options ] %>
+  <%= link_to ads_checklist_audits_path, class: "btn txt-small" do %>
+    <%= icon_tag "history" %> <span>History</span>
+  <% end %>
+<% end %>
+<%= render "layouts/shared/index_toolbar", new_text: (can?(:manage_ad_accounts) ? "Add an ad account" : nil),
+      new_path: (new_ads_checklist_account_path(client_id: @client&.id) if can?(:manage_ad_accounts)) %>
+
+<section class="panel shadow center index-table">
+  <table class="data-table">
+    <thead>
+      <tr><th>Ad account</th><th>Platform</th><th><%= term(:client) %></th><th>Checklist</th><th>To do</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% @accounts.each do |account| %>
+        <%# herb:key account.id %>
+        <% summary = account.summary %>
+        <tr data-filter-target="item">
+          <td>
+            <%= link_to ads_checklist_account_path(account), class: "txt-ink" do %>
+              <strong><%= account.name %></strong>
+              <div class="txt-x-small txt-subtle overflow-ellipsis"><%= account.external_id || account.host %></div>
+            <% end %>
+          </td>
+          <td><%= ad_platform_tag account %></td>
+          <td><%= link_to account.client.name, client_path(account.client, tab: "plugin-ads_checklist"), class: "txt-ink" %></td>
+          <td><%= ad_account_summary_tag account, summary %></td>
+          <td class="txt-small"><%= ad_account_attention_text(account, summary) || "Nothing" %></td>
+          <%= render "layouts/shared/row_actions", name: account.name,
+                edit_path: (edit_ads_checklist_account_path(account) if can?(:manage_ad_accounts)),
+                delete_path: (ads_checklist_account_path(account) if can?(:manage_ad_accounts)),
+                delete_message: "This forgets the ad account and its checklist." %>
+        </tr>
+      <% end %>
+      <% if @accounts.empty? %>
+        <tr>
+          <td colspan="6" class="txt-subtle txt-small">
+            <% if @show == "attention" && @counts["all"].positive? %>
+              Every ad account is live, every step confirmed. <%= link_to "Show all", ads_checklist_accounts_path(show: "all", platform: @platform, client_id: @client&.id), class: "txt-link" %>
+            <% else %>
+              No ad accounts yet. Add a <%= term(:client).downcase %>'s Google Ads or Meta Ads account to gather what it needs to go live, step by step.
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

@@ -1,0 +1,357 @@
+/* Linked on every page while Ads is on (Runwell::Plugins.stylesheet). Runwell's
+   design tokens (docs/theming.md), so themes reach these too. */
+@layer components {
+  /* Google Ads or Meta Ads: the status tag's dot in the platform's colour. */
+  .ads-checklist-platform--google { --status-dot: oklch(var(--lch-green-medium)); }
+  .ads-checklist-platform--meta { --status-dot: oklch(var(--lch-blue-medium)); }
+
+  .ads-checklist-accounts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--block-space);
+    list-style: none;
+    margin: var(--block-space) 0 0;
+    padding: 0;
+  }
+
+  .ads-checklist-item__head {
+    align-items: start;
+    display: flex;
+    gap: var(--inline-space);
+    justify-content: space-between;
+  }
+
+  .ads-checklist-item__title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--inline-space-half);
+    min-inline-size: 0;
+  }
+
+  .ads-checklist-item__actions {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--inline-space-half);
+  }
+
+  .ads-checklist-account {
+    align-items: baseline;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--inline-space-half) var(--inline-space);
+  }
+
+  .ads-checklist-value {
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+  }
+
+  /* An account's page: the steps on the left, the picked one on the right, half each, kept in view. */
+  .settings.settings--split.ads-checklist-split {
+    @media (min-width: 960px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .ads-checklist-detail {
+    @media (min-width: 960px) {
+      inset-block-start: var(--block-space);
+      max-block-size: calc(100dvh - var(--block-space) * 2);
+      min-block-size: 0;
+      overflow-y: auto;
+      position: sticky;
+    }
+  }
+
+  .ads-checklist-detail__title {
+    font-size: var(--text-medium);
+    font-weight: 650;
+    margin: 0;
+  }
+
+  .ads-checklist-group__header {
+    align-items: center;
+    display: flex;
+    gap: var(--inline-space);
+
+    .divider {
+      flex: 1;
+    }
+  }
+
+  .ads-checklist-dot {
+    background-color: var(--color-ink-light);
+    block-size: 0.5em;
+    border-radius: 50%;
+    flex-shrink: 0;
+    inline-size: 0.5em;
+  }
+
+  .ads-checklist-dot--confirmed { background-color: oklch(var(--lch-green-medium)); }
+  .ads-checklist-dot--changed { background-color: var(--color-negative); }
+  .ads-checklist-dot--not_applicable { background-color: var(--color-ink-lighter); }
+
+  .ads-checklist-add[open] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: var(--block-space-half);
+  }
+
+  .ads-checklist-step {
+    font-variant-numeric: tabular-nums;
+    min-inline-size: 1.5em;
+    text-align: end;
+  }
+
+  .ads-checklist-how {
+    background: var(--color-ink-lightest);
+    border-radius: calc(0.5rem * var(--radius-scale, 1));
+    display: flex;
+    flex-direction: column;
+    gap: 0.25em;
+    padding: var(--block-space-half) var(--inline-space);
+  }
+
+  .ads-checklist-next {
+    margin-inline-start: auto;
+  }
+
+  /* The Webhooks step: each webhook an accordion, its keys and values rows of two fields. */
+  .ads-checklist-webhooks,
+  .ads-checklist-webhooks__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--block-space-half);
+  }
+
+  .ads-checklist-webhook {
+    border: 1px solid var(--color-ink-lighter);
+    border-radius: calc(0.5rem * var(--radius-scale, 1));
+  }
+
+  .ads-checklist-webhook__summary {
+    align-items: center;
+    cursor: pointer;
+    display: grid;
+    gap: 0 var(--inline-space-half);
+    grid-template-columns: auto minmax(0, auto) minmax(0, 1fr);
+    list-style: none;
+    padding: var(--block-space-half) var(--inline-space);
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  .ads-checklist-webhook__caret {
+    color: var(--color-ink-medium);
+    transform: rotate(-90deg);
+    transition: transform 150ms ease;
+  }
+
+  .ads-checklist-webhook[open] > .ads-checklist-webhook__summary .ads-checklist-webhook__caret {
+    transform: none;
+  }
+
+  .ads-checklist-webhook__body {
+    border-block-start: 1px solid var(--color-ink-lighter);
+    display: flex;
+    flex-direction: column;
+    gap: var(--block-space-half);
+    padding: var(--block-space-half) var(--inline-space);
+  }
+
+  .ads-checklist-pairs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--block-space-half);
+  }
+
+  .ads-checklist-pair {
+    align-items: center;
+    display: grid;
+    gap: var(--inline-space-half);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) auto;
+  }
+
+  /* The history: each change's fields, before struck through and after beside it. */
+  .ads-checklist-history td {
+    vertical-align: top;
+  }
+
+  .ads-checklist-history__who {
+    align-items: center;
+    display: inline-flex;
+    gap: var(--inline-space-half);
+  }
+
+  .ads-checklist-diff {
+    display: grid;
+    gap: 0.25em var(--inline-space);
+    grid-template-columns: auto minmax(0, 1fr);
+    margin: 0.35em 0 0;
+
+    dt {
+      color: var(--color-ink-dark);
+    }
+
+    dd {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25em var(--inline-space-half);
+      margin: 0;
+      overflow-wrap: anywhere;
+      white-space: pre-line;
+    }
+
+    del {
+      background: oklch(var(--lch-red-medium) / 12%);
+      color: var(--color-ink-dark);
+    }
+
+    ins {
+      background: oklch(var(--lch-green-medium) / 15%);
+      text-decoration: none;
+    }
+  }
+
+  /* The AI audit: a sheet two-thirds of the window wide, docked right, the recommendations on its
+     left and the one picked on its right. */
+  .ads-checklist-sheet[open] {
+    --panel-padding: 0;
+
+    block-size: calc(100dvh - 1rem);
+    display: flex;
+    flex-direction: column;
+    inline-size: min(66.667vw, calc(100vw - 1rem));
+    inset: 0.5rem 0.5rem 0.5rem auto;
+    margin: 0;
+    max-block-size: none;
+    max-inline-size: none;
+    position: fixed;
+
+    > turbo-frame {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      min-block-size: 0;
+      overflow-y: auto;
+    }
+
+    @media (max-width: 959px) {
+      inline-size: calc(100vw - 1rem);
+    }
+  }
+
+  .ads-checklist-sheet--narrow[open] {
+    inline-size: min(36rem, calc(100vw - 1rem));
+  }
+
+  .ads-checklist-sheet__bar {
+    align-items: center;
+    border-block-end: 1px solid var(--color-ink-lighter);
+    display: flex;
+    gap: var(--inline-space);
+    justify-content: space-between;
+    padding: var(--block-space-half) var(--block-space);
+  }
+
+  .ads-checklist-sheet__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--block-space);
+    padding: var(--block-space);
+  }
+
+  .ads-checklist-sheet__form {
+    align-items: end;
+    display: grid;
+    gap: var(--inline-space);
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ads-checklist-sheet__intro {
+    color: var(--color-ink-dark);
+    display: flex;
+    flex-direction: column;
+    gap: var(--block-space-half);
+    max-inline-size: 70ch;
+  }
+
+  .ads-checklist-sheet__working {
+    align-items: center;
+    display: flex;
+    gap: var(--inline-space-half);
+
+    .icon {
+      animation: ads-checklist-spin 1.2s linear infinite;
+    }
+  }
+
+  @keyframes ads-checklist-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .ads-checklist-sheet__facts summary {
+    color: var(--color-ink-dark);
+    cursor: pointer;
+  }
+
+  .ads-checklist-sheet__facts .code-block {
+    max-block-size: 24rem;
+    overflow: auto;
+  }
+
+  .ads-checklist-review {
+    display: grid;
+    gap: calc(var(--block-space) * 1.5);
+
+    @media (min-width: 720px) {
+      align-items: start;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+
+  .ads-checklist-review__list {
+    margin-inline: 0;
+  }
+
+  .ads-checklist-review__actions {
+    display: flex;
+    gap: var(--inline-space-half);
+  }
+
+  .ads-checklist-dot--pending { background-color: oklch(var(--lch-yellow-medium)); }
+  .ads-checklist-dot--approved { background-color: oklch(var(--lch-green-medium)); }
+  .ads-checklist-dot--rejected { background-color: var(--color-ink-lighter); }
+
+  .ads-checklist-alert {
+    border: 1px solid oklch(var(--lch-red-medium));
+    border-radius: calc(0.5rem * var(--radius-scale, 1));
+    color: oklch(var(--lch-red-dark));
+    padding: var(--block-space-half) var(--inline-space);
+  }
+
+  /* A step's files. */
+  .ads-checklist-files {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35em;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    li {
+      align-items: center;
+      display: flex;
+      gap: var(--inline-space-half);
+      min-inline-size: 0;
+    }
+  }
+
+  .ads-checklist-drop {
+    min-block-size: 4.5rem;
+  }
+}

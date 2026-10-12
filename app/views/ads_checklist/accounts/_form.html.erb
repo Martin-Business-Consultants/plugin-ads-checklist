@@ -1,0 +1,40 @@
+<%# locals: (account:) %>
+<%= render "layouts/shared/errors", record: account %>
+
+<%= form_with model: account, url: account.new_record? ? ads_checklist_accounts_path : ads_checklist_account_path(account), scope: :account, class: "record-form", data: { controller: "form", action: "keydown.esc->form#cancel" } do |form| %>
+  <% if account.new_record? %>
+    <div class="record-form__row">
+      <label class="record-form__field">
+        <span class="record-form__label"><%= term(:client) %></span>
+        <%= form.select :client_id, ad_account_client_options, { include_blank: "Choose…" }, class: "input input--select full-width", required: true %>
+      </label>
+      <label class="record-form__field">
+        <span class="record-form__label">Platform</span>
+        <%= form.select :platform, ad_platform_options, { include_blank: "Choose…" }, class: "input input--select full-width", required: true %>
+      </label>
+    </div>
+  <% end %>
+
+  <div class="record-form__row">
+    <label class="record-form__field">
+      <span class="record-form__label">Name</span>
+      <%= form.text_field :name, class: "input full-width", autofocus: account.new_record?, autocomplete: "off", placeholder: "Acme Plumbing – Search", required: true %>
+    </label>
+    <label class="record-form__field">
+      <span class="record-form__label"><%= account.platform ? account.external_id_label : "Customer or ad account ID" %></span>
+      <%= form.text_field :external_id, class: "input full-width", autocomplete: "off", placeholder: account.external_id_example || "123-456-7890 or act_1234567890" %>
+    </label>
+  </div>
+
+  <label class="record-form__field">
+    <span class="record-form__label">Website the ads send people to</span>
+    <%= form.url_field :url, class: "input full-width", autocomplete: "off", placeholder: "https://example.com" %>
+  </label>
+
+  <div class="record-form__footer">
+    <%= link_to "Cancel", account.new_record? ? ads_checklist_accounts_path : ads_checklist_account_path(account), class: "btn btn--plain record-form__cancel", data: { form_target: "cancel" } %>
+    <button type="submit" class="btn btn--link" data-form-target="submit">
+      <span><%= account.new_record? ? "Add ad account" : "Save changes" %></span>
+    </button>
+  </div>
+<% end %>

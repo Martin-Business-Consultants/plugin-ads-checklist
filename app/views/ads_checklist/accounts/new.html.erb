@@ -1,0 +1,12 @@
+<% @page_title = "Add an ad account" %>
+
+<% content_for :header do %>
+  <%= parent_page "Ads", ads_checklist_accounts_path %>
+<% end %>
+
+<section class="settings">
+  <div class="settings__panel panel shadow txt-align-start">
+    <h1 class="page-title"><%= @page_title %></h1>
+    <%= render "ads_checklist/accounts/form", account: @account %>
+  </div>
+</section>
