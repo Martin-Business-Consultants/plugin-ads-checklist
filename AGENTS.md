@@ -50,12 +50,15 @@ Read first, in Runwell's repository:
   `unconfirmed`, `confirmed`, `not_applicable`; `confirmed_value` is what was confirmed.
 - The lead webhooks step (`Item#webhooks?`: `google:webhooks`, `meta:webhooks`) records `Webhook`s (name, url, `pairs` of keys and values)
   through nested attributes; its value is them written out. The form is a repeater over the
-  core's `repeater` Stimulus controller, built in `AccountsHelper` (partials can't render in a form).
+  plugin's own `ads-checklist--repeater` Stimulus controller
+  (`app/javascript/ads_checklist/controllers/repeater_controller.js`), built in `AccountsHelper`
+  (partials can't render in a form).
 - Every change is audited (`Audited`, included in `Account`, `Item` and `Webhook`): an `Audit` per
   create, update and delete with the changed fields' before and after as people read them, who
   (`Current.user`, `Current.source`, the token's name) and the account, written in the save's
   transaction. Bulk writes that skip callbacks (`insert!`, `delete_all`) aren't audited: keep
-  them to system work (`apply_standard_checklist`, an account's deletion, which is audited itself). A
+  them to system work (`apply_standard_checklist`, an account's deletion, which is audited
+  itself). A
   verb should save once so a change is one entry (`Item#record`). `AuditsController` shows them.
 - Steps keep files (`Item#files`, Active Storage; `add_file` / `remove_file` audit them).
 - The AI audit: `Scan` (the website's domain) runs in `ScanJob`: `Account::Probe` gathers facts

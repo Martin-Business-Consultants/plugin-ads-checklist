@@ -39,7 +39,7 @@ module AdsChecklist
 
     config.to_prepare do
       Runwell::Plugins.register :ads_checklist, name: "Ads", version: AdsChecklist::VERSION,
-        author: "Martin Business Consultants", enabled_by_default: false, requires: ">= 2.24.0",
+        author: "Martin Business Consultants", enabled_by_default: false, requires: ">= 2.29.0",
         homepage: "https://github.com/Martin-Business-Consultants/plugin-ads-checklist",
         description: "Every client's Google Ads and Meta Ads accounts, each with a step-by-step checklist to take it " \
                      "live: access and billing first, then tracking, the campaigns, launch and after launch, each " \

@@ -54,18 +54,19 @@ module AdsChecklist
 
     def ad_account_client_options = Client.ordered.pluck(:name, :id)
 
-    # The Webhooks step's fields, inside the item's form: a repeater (the core's `repeater`
-    # controller) of webhooks, each an accordion with its name, address and keys and values.
+    # The Webhooks step's fields, inside the item's form: a repeater (the plugin's own
+    # `ads-checklist--repeater` controller) of webhooks, each an accordion with its name,
+    # address and keys and values.
     # Built here rather than in partials, which can't render inside form_with.
     def ad_account_webhooks_fields(form, item)
       rows = item.webhooks.each_with_index.map { |webhook, index| ad_account_webhook_row(form, webhook, index) }
-      tag.div class: "ads-checklist-webhooks", data: { controller: "repeater", repeater_placeholder_value: "NEW_WEBHOOK" } do
+      tag.div class: "ads-checklist-webhooks", data: { controller: "ads-checklist--repeater", "ads-checklist--repeater-placeholder-value": "NEW_WEBHOOK" } do
         safe_join([
           hidden_field_tag("#{form.object_name}[webhooks_attributes][-1][name]", "", id: nil),
-          tag.div(safe_join(rows), class: "ads-checklist-webhooks__list", data: { repeater_target: "list" }),
-          tag.template(ad_account_webhook_row(form, Webhook.new, "NEW_WEBHOOK", open: true), data: { repeater_target: "template" }),
+          tag.div(safe_join(rows), class: "ads-checklist-webhooks__list", data: { "ads-checklist--repeater-target": "list" }),
+          tag.template(ad_account_webhook_row(form, Webhook.new, "NEW_WEBHOOK", open: true), data: { "ads-checklist--repeater-target": "template" }),
           tag.div(class: "section-actions") do
-            tag.button(safe_join([ icon_tag("add"), tag.span("Add a webhook") ], " "), type: "button", class: "btn txt-small", data: { action: "repeater#add" })
+            tag.button(safe_join([ icon_tag("add"), tag.span("Add a webhook") ], " "), type: "button", class: "btn txt-small", data: { action: "ads-checklist--repeater#add" })
           end
         ])
       end
@@ -98,7 +99,7 @@ module AdsChecklist
                   ad_account_pairs_fields(fields, webhook),
                   tag.div(class: "section-actions") do
                     tag.button(safe_join([ icon_tag("trash"), tag.span("Remove this webhook") ], " "), type: "button",
-                      class: "btn txt-small", data: { action: "repeater#remove" })
+                      class: "btn txt-small", data: { action: "ads-checklist--repeater#remove" })
                   end
                 ].compact)
               end
@@ -111,14 +112,14 @@ module AdsChecklist
       def ad_account_pairs_fields(fields, webhook)
         name = "#{fields.object_name}[pairs]"
         rows = webhook.pairs.each_with_index.map { |pair, index| ad_account_pair_row(name, pair, index) }
-        tag.div class: "record-form__field", data: { controller: "repeater", repeater_placeholder_value: "NEW_PAIR" } do
+        tag.div class: "record-form__field", data: { controller: "ads-checklist--repeater", "ads-checklist--repeater-placeholder-value": "NEW_PAIR" } do
           safe_join([
             tag.span("Keys and values", class: "record-form__label"),
             hidden_field_tag("#{name}[-1][key]", "", id: nil),
-            tag.div(safe_join(rows), class: "ads-checklist-pairs", data: { repeater_target: "list" }),
-            tag.template(ad_account_pair_row(name, {}, "NEW_PAIR"), data: { repeater_target: "template" }),
+            tag.div(safe_join(rows), class: "ads-checklist-pairs", data: { "ads-checklist--repeater-target": "list" }),
+            tag.template(ad_account_pair_row(name, {}, "NEW_PAIR"), data: { "ads-checklist--repeater-target": "template" }),
             tag.div do
-              tag.button(safe_join([ icon_tag("add"), tag.span("Add a key") ], " "), type: "button", class: "btn txt-small", data: { action: "repeater#add" })
+              tag.button(safe_join([ icon_tag("add"), tag.span("Add a key") ], " "), type: "button", class: "btn txt-small", data: { action: "ads-checklist--repeater#add" })
             end
           ])
         end
@@ -130,7 +131,7 @@ module AdsChecklist
             text_field_tag("#{name}[#{index}][key]", pair["key"], id: nil, class: "input", autocomplete: "off", placeholder: "Key", aria: { label: "Key" }),
             text_field_tag("#{name}[#{index}][value]", pair["value"], id: nil, class: "input", autocomplete: "off", placeholder: "Value", aria: { label: "Value" }),
             tag.button(safe_join([ icon_tag("close"), tag.span("Remove", class: "for-screen-reader") ]), type: "button",
-              class: "btn btn--circle borderless txt-small", title: "Remove", data: { action: "repeater#remove" })
+              class: "btn btn--circle borderless txt-small", title: "Remove", data: { action: "ads-checklist--repeater#remove" })
           ])
         end
       end

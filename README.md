@@ -8,7 +8,7 @@ campaigns, the launch itself, and what follows it. It mirrors the Websites plugi
 
 A Runwell plugin (Runwell's `docs/plugins.md`): a Rails engine that owns its `ads_checklist_*`
 tables, reaches clients by id, and extends the core only through the plugin contract. Needs
-Runwell 2.24 or newer (2.25 for its megaphone in the nav).
+Runwell 2.29 or newer.
 
 ## Install
 
